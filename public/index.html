@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FF Nexus — Free Fire UID Checker</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&family=Hind+Siliguri:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#07070f;--card:#12121f;--line:#26263d;--tx:#eaeaf5;--mut:#8b8ba7;--a:#ff3d6e;--b:#00e5ff}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(900px 500px at 10% -10%,#2a0a1f55,transparent),radial-gradient(800px 500px at 100% 0,#00323d55,transparent),var(--bg);color:var(--tx);font-family:'Hind Siliguri',sans-serif;min-height:100vh}
+header{display:flex;justify-content:space-between;align-items:center;padding:16px 5vw;border-bottom:1px solid var(--line)}
+.logo{font-family:Rajdhani;font-weight:700;font-size:26px;letter-spacing:2px;background:linear-gradient(90deg,var(--a),var(--b));-webkit-background-clip:text;color:transparent}
+nav button{background:none;border:0;color:var(--mut);font:600 15px 'Hind Siliguri';cursor:pointer;padding:8px 12px}
+nav button.on,nav button:hover{color:var(--b)}
+main{max-width:900px;margin:0 auto;padding:30px 5vw}
+h1{font-family:Rajdhani;font-size:clamp(30px,6vw,52px);margin:10px 0}
+p.sub{color:var(--mut);margin-top:0}
+.box{display:flex;gap:10px;flex-wrap:wrap;margin:20px 0}
+input,select{background:var(--card);border:1px solid var(--line);color:var(--tx);padding:14px;border-radius:10px;font:16px 'Hind Siliguri';outline:none}
+input:focus{border-color:var(--b)}
+input.grow{flex:1;min-width:200px}
+.btn{background:linear-gradient(90deg,var(--a),#ff8a3d);border:0;color:#fff;padding:14px 26px;border-radius:10px;font:700 16px Rajdhani;letter-spacing:1px;cursor:pointer}
+.btn.alt{background:var(--card);border:1px solid var(--b);color:var(--b)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px;margin:16px 0}
+.hero{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.nick{font-family:Rajdhani;font-size:32px;font-weight:700}
+.chip{display:inline-block;padding:4px 12px;border-radius:99px;border:1px solid var(--b);color:var(--b);font-size:13px;margin-right:6px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px;margin-top:16px}
+.cell{background:#0b0b16;border:1px solid var(--line);border-radius:10px;padding:12px;overflow-wrap:anywhere}
+.cell small{display:block;color:var(--mut);font-size:12px;text-transform:uppercase;letter-spacing:1px}
+.cell b{font-family:Rajdhani;font-size:19px}
+.sec{margin-top:18px;color:var(--a);font:700 15px Rajdhani;letter-spacing:2px}
+.err{color:#ff6b6b}
+pre{background:#05050c;border:1px solid var(--line);padding:14px;border-radius:10px;overflow-x:auto;color:var(--b);font-size:13px}
+code.k{background:#05050c;padding:4px 8px;border-radius:6px;color:var(--b);word-break:break-all}
+.hide{display:none}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">FF NEXUS</div>
+  <nav>
+    <button data-v="home" class="on">চেকার</button>
+    <button data-v="docs">API ডক</button>
+    <button data-v="acct" id="acctBtn">লগইন</button>
+  </nav>
+</header>
+<main>
+
+<section id="home">
+  <h1>ইউআইডি দিন, সব জানুন</h1>
+  <p class="sub">অ্যাকাউন্ট ছাড়াই ফ্রি ফায়ার প্লেয়ারের সম্পূর্ণ তথ্য দেখুন।</p>
+  <div class="box">
+    <input id="uid" class="grow" inputmode="numeric" placeholder="প্লেয়ার UID লিখুন">
+    <select id="region"><option value="bd">BD</option><option value="ind">IND</option><option value="sg">SG</option><option value="id">ID</option><option value="br">BR</option><option value="me">ME</option><option value="pk">PK</option><option value="th">TH</option></select>
+    <button class="btn" id="go">চেক করুন</button>
+  </div>
+  <div id="out"></div>
+</section>
+
+<section id="docs" class="hide">
+  <h1>ডেভেলপার API</h1>
+  <p class="sub">নিজের UID চেকার সাইট বানাতে এই API ব্যবহার করুন। প্রথমে অ্যাকাউন্ট খুলে API key নিন।</p>
+  <div class="card"><div class="sec">এন্ডপয়েন্ট</div>
+    <pre id="ex1"></pre>
+    <div class="sec">উদাহরণ (JavaScript)</div>
+    <pre id="ex2"></pre>
+    <div class="sec">রেসপন্স</div>
+    <pre>{ "success": true, "data": { ...প্লেয়ারের সব তথ্য... } }</pre>
+    <div class="sec">এরর কোড</div>
+    <p class="sub">400 ভুল UID · 401 ভুল key · 404 প্লেয়ার নেই · 429 লিমিট শেষ</p>
+  </div>
+</section>
+
+<section id="acct" class="hide"></section>
+</main>
+
+<script>
+const $ = s => document.querySelector(s);
+const BASE = location.origin;
+let token = localStorage.getItem('t') || '';
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+function show(v){
+  document.querySelectorAll('main>section').forEach(s => s.classList.toggle('hide', s.id !== v));
+  document.querySelectorAll('nav button').forEach(b => b.classList.toggle('on', b.dataset.v === v));
+  if (v === 'acct') renderAcct();
+}
+document.querySelectorAll('nav button').forEach(b => b.onclick = () => show(b.dataset.v));
+
+// ---- ফিল্ড সাজানো ----
+const ts = ['time','created','login','date','updated'];
+function fmt(k, v){
+  if (typeof v === 'number' && v > 1e9 && v < 4e9 && ts.some(t => k.toLowerCase().includes(t)))
+    return new Date(v * 1000).toLocaleString('bn-BD');
+  if (typeof v === 'number' && v > 1e12 && ts.some(t => k.toLowerCase().includes(t)))
+    return new Date(v).toLocaleString('bn-BD');
+  return v;
+}
+function flatten(o, p = '', out = []){
+  for (const [k, v] of Object.entries(o || {})){
+    const key = p ? p + ' › ' + k : k;
+    if (v && typeof v === 'object' && !Array.isArray(v)) flatten(v, key, out);
+    else out.push([key, Array.isArray(v) ? (v.length ? v.join(', ') : '—') : (v === '' || v === null ? '—' : fmt(k, v)), p]);
+  }
+  return out;
+}
+function find(rows, names){
+  for (const n of names){ const r = rows.find(r => r[0].toLowerCase().split(' › ').pop() === n); if (r) return r[1]; }
+}
+function render(d){
+  const rows = flatten(d);
+  const nick = find(rows, ['nickname','name','nick']) || 'প্লেয়ার';
+  const lvl = find(rows, ['level','lvl']);
+  const likes = find(rows, ['likes','like','liked']);
+  const guild = find(rows, ['guildname','guild_name','clanname','guild']);
+  const groups = {};
+  rows.forEach(r => (groups[r[2] || 'মূল তথ্য'] ||= []).push(r));
+  let h = `<div class="card"><div class="hero"><div class="nick">${esc(nick)}</div>
+    ${lvl ? `<span class="chip">LV ${esc(lvl)}</span>` : ''}${likes ? `<span class="chip">❤ ${esc(likes)}</span>` : ''}${guild ? `<span class="chip">🛡 ${esc(guild)}</span>` : ''}</div>`;
+  for (const [g, rs] of Object.entries(groups)){
+    h += `<div class="sec">${esc(g.toUpperCase())}</div><div class="grid">` +
+      rs.map(r => `<div class="cell"><small>${esc(r[0].split(' › ').pop())}</small><b>${esc(r[1])}</b></div>`).join('') + '</div>';
+  }
+  return h + '</div>';
+}
+$('#go').onclick = async () => {
+  const uid = $('#uid').value.trim(), out = $('#out');
+  if (!/^\d{5,15}$/.test(uid)) return out.innerHTML = '<p class="err">সঠিক UID দিন</p>';
+  out.innerHTML = '<p class="sub">খুঁজছি...</p>';
+  try {
+    const r = await fetch(`/api/lookup?uid=${uid}&region=${$('#region').value}`);
+    const j = await r.json();
+    out.innerHTML = r.ok ? render(j.data) : `<p class="err">${esc(j.error)}</p>`;
+  } catch { out.innerHTML = '<p class="err">নেটওয়ার্ক সমস্যা</p>'; }
+};
+$('#uid').onkeydown = e => e.key === 'Enter' && $('#go').click();
+
+// ---- ডক ----
+$('#ex1').textContent = `GET ${BASE}/v1/player?uid=PLAYER_UID&region=bd&key=YOUR_API_KEY`;
+$('#ex2').textContent = `fetch("${BASE}/v1/player?uid=123456789&region=bd&key=YOUR_API_KEY")
+  .then(r => r.json())
+  .then(console.log);`;
+
+// ---- অ্যাকাউন্ট ----
+async function api(path, body, auth){
+  const r = await fetch(path, { method: body ? 'POST' : 'GET',
+    headers: { 'Content-Type': 'application/json', ...(auth ? { Authorization: 'Bearer ' + token } : {}) },
+    body: body ? JSON.stringify(body) : undefined });
+  return { ok: r.ok, j: await r.json() };
+}
+async function renderAcct(){
+  const el = $('#acct');
+  if (token){
+    const { ok, j } = await api('/api/me', null, true);
+    if (!ok){ token = ''; localStorage.removeItem('t'); return renderAcct(); }
+    $('#acctBtn').textContent = 'ড্যাশবোর্ড';
+    el.innerHTML = `<h1>ড্যাশবোর্ড</h1><div class="card">
+      <p class="sub">${esc(j.email)}</p><div class="sec">আপনার API KEY</div>
+      <p><code class="k" id="kk">${esc(j.api_key)}</code></p>
+      <p class="sub">আজ ব্যবহার: ${j.usedToday} / ${j.dailyLimit || 'আনলিমিটেড'}</p>
+      <button class="btn alt" id="cp">কপি</button> <button class="btn alt" id="rg">নতুন key বানান</button>
+      <button class="btn alt" id="lo">লগআউট</button></div>`;
+    $('#cp').onclick = () => { navigator.clipboard.writeText(j.api_key); $('#cp').textContent = 'কপি হয়েছে'; };
+    $('#rg').onclick = async () => { if (confirm('পুরনো key বন্ধ হয়ে যাবে। নিশ্চিত?')){ await api('/api/regenerate-key', {}, true); renderAcct(); } };
+    $('#lo').onclick = () => { token = ''; localStorage.removeItem('t'); $('#acctBtn').textContent = 'লগইন'; renderAcct(); };
+  } else {
+    el.innerHTML = `<h1>অ্যাকাউন্ট</h1><div class="card">
+      <input id="em" class="grow" style="width:100%;margin-bottom:10px" placeholder="ইমেইল" type="email">
+      <input id="pw" class="grow" style="width:100%;margin-bottom:10px" placeholder="পাসওয়ার্ড (কমপক্ষে ৬)" type="password">
+      <button class="btn" id="li">লগইন</button> <button class="btn alt" id="rg2">রেজিস্টার</button>
+      <p class="err" id="ae"></p></div>`;
+    const go = async path => {
+      const { ok, j } = await api(path, { email: $('#em').value, password: $('#pw').value });
+      if (!ok) return $('#ae').textContent = j.error;
+      token = j.token; localStorage.setItem('t', token); renderAcct();
+    };
+    $('#li').onclick = () => go('/api/login');
+    $('#rg2').onclick = () => go('/api/register');
+  }
+}
+if (token) $('#acctBtn').textContent = 'ড্যাশবোর্ড';
+</script>
+</body>
+</html>
